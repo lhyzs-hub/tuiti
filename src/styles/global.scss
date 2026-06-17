@@ -1,0 +1,65 @@
+// 全局样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  min-height: 100vh;
+  background-color: $bg-color;
+}
+
+// 通用组件样式
+.btn {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-md;
+  border: none;
+  font-size: $font-size-md;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.primary {
+    background-color: $primary-color;
+    color: white;
+  }
+
+  &.secondary {
+    background-color: $secondary-color;
+    color: white;
+  }
+}
+
+.card {
+  background-color: $bg-white;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  box-shadow: $shadow-sm;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-primary {
+  color: $text-primary;
+}
+
+.text-secondary {
+  color: $text-secondary;
+}
+
+.text-tertiary {
+  color: $text-tertiary;
+}
