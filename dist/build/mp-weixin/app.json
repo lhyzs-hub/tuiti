@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/publish/index",
+    "pages/price/index",
+    "pages/tracking/index",
+    "pages/credit/index",
+    "pages/profile/index",
+    "pages/brand/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "腿替",
+    "navigationBarBackgroundColor": "#1E88E5",
+    "backgroundColor": "#F5F7FA",
+    "backgroundColorTop": "#F5F7FA",
+    "backgroundColorBottom": "#F5F7FA"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#1E88E5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/icons/home.png",
+        "selectedIconPath": "static/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/publish/index",
+        "text": "发布",
+        "iconPath": "static/icons/publish.png",
+        "selectedIconPath": "static/icons/publish-active.png"
+      },
+      {
+        "pagePath": "pages/tracking/index",
+        "text": "追踪",
+        "iconPath": "static/icons/tracking.png",
+        "selectedIconPath": "static/icons/tracking-active.png"
+      },
+      {
+        "pagePath": "pages/credit/index",
+        "text": "信用",
+        "iconPath": "static/icons/credit.png",
+        "selectedIconPath": "static/icons/credit-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "static/icons/profile.png",
+        "selectedIconPath": "static/icons/profile-active.png"
+      }
+    ]
+  },
+  "usingComponents": {}
+}
