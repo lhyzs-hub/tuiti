@@ -16,14 +16,20 @@ const orderData = ref({
   price: 0
 })
 
-// 距离（模拟）
+// 距离（模拟数据）
+// 实际项目中应通过地图API实时获取两点间的实际距离
+// 推荐使用腾讯地图/高德地图的 distance API 进行计算
 const distance = ref(3.5)
 
 // 计算详细价格
+// 价格构成：基础费用 + 距离费用 + 加急费用（如有）
 const priceBreakdown = computed(() => {
-  const basePrice = orderData.value.price
+  const basePrice = orderData.value.price || 10 // 基础服务费
+  // 距离费用：每公里2元，不足1公里按1公里计算
   const distanceFee = Math.ceil(distance.value) * 2
+  // 加急费用：如果选择了加急取件，则收取加急费3元
   const timeFee = orderData.value.pickupTime ? 3 : 0
+  // 总价 = 基础费用 + 距离费用 + 加急费用
   const total = basePrice + distanceFee + timeFee
 
   return {

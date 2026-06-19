@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+
+// 存储键名
+const STORAGE_KEYS = {
+  USER_INFO: 'tuiti_user_info',
+  ORDER_STATS: 'tuiti_order_stats',
+  FORM_DRAFT: 'tuiti_form_draft'
+}
 
 // 用户信息
 const userInfo = ref({
@@ -18,6 +25,91 @@ const orderStats = ref({
   completed: 115,
   cancelled: 5
 })
+
+// 页面加载时恢复数据
+onMounted(() => {
+  loadUserData()
+})
+
+// 保存用户信息到本地存储
+const saveUserData = () => {
+  try {
+    uni.setStorageSync(STORAGE_KEYS.USER_INFO, JSON.stringify(userInfo.value))
+    uni.setStorageSync(STORAGE_KEYS.ORDER_STATS, JSON.stringify(orderStats.value))
+    console.log('用户数据已保存')
+  } catch (error) {
+    console.error('保存用户数据失败:', error)
+  }
+}
+
+// 从本地存储加载用户数据
+const loadUserData = () => {
+  try {
+    const savedUserInfo = uni.getStorageSync(STORAGE_KEYS.USER_INFO)
+    if (savedUserInfo) {
+      userInfo.value = JSON.parse(savedUserInfo)
+    }
+
+    const savedOrderStats = uni.getStorageSync(STORAGE_KEYS.ORDER_STATS)
+    if (savedOrderStats) {
+      orderStats.value = JSON.parse(savedOrderStats)
+    }
+  } catch (error) {
+    console.error('加载用户数据失败:', error)
+  }
+}
+
+// 保存表单草稿
+const saveFormDraft = (formData: any) => {
+  try {
+    uni.setStorageSync(STORAGE_KEYS.FORM_DRAFT, JSON.stringify(formData))
+    uni.showToast({
+      title: '草稿已保存',
+      icon: 'success'
+    })
+  } catch (error) {
+    console.error('保存表单草稿失败:', error)
+  }
+}
+
+// 加载表单草稿
+const loadFormDraft = () => {
+  try {
+    const draft = uni.getStorageSync(STORAGE_KEYS.FORM_DRAFT)
+    if (draft) {
+      uni.showModal({
+        title: '发现草稿',
+        content: '是否恢复上次未提交的内容？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showToast({
+              title: '草稿已恢复',
+              icon: 'success'
+            })
+          }
+        }
+      })
+      return JSON.parse(draft)
+    }
+    return null
+  } catch (error) {
+    console.error('加载表单草稿失败:', error)
+    return null
+  }
+}
+
+// 清除所有本地数据
+const clearAllData = () => {
+  try {
+    uni.clearStorageSync()
+    uni.showToast({
+      title: '数据已清除',
+      icon: 'success'
+    })
+  } catch (error) {
+    console.error('清除数据失败:', error)
+  }
+}
 
 // 功能列表
 const menuItems = ref([
@@ -81,10 +173,31 @@ const menuItems = ref([
 
 // 跳转页面
 const handleNavigate = (item: typeof menuItems.value[0]) => {
-  uni.showToast({
-    title: `跳转到${item.title}`,
-    icon: 'none'
-  })
+  // 检查页面路径是否存在
+  // 实际项目中应根据页面是否存在来决定跳转行为
+  const validPages = [
+    '/pages/orders/index',
+    '/pages/wallet/index',
+    '/pages/address/index',
+    '/pages/reviews/index',
+    '/pages/invite/index',
+    '/pages/settings/index',
+    '/pages/help/index',
+    '/pages/about/index'
+  ]
+
+  if (validPages.includes(item.path)) {
+    // 页面已实现，正常跳转
+    uni.navigateTo({
+      url: item.path
+    })
+  } else {
+    // 页面未实现，提示用户
+    uni.showToast({
+      title: `${item.title}功能正在开发中`,
+      icon: 'none'
+    })
+  }
 }
 
 // 编辑资料

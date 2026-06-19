@@ -15,7 +15,7 @@ const eta = ref(15)
 const orderStatus = ref('进行中')
 
 // 更新位置
-let updateTimer: number | null = null
+let updateTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   // 模拟实时位置更新
@@ -32,30 +32,65 @@ onMounted(() => {
 
     if (distance.value <= 0.1) {
       orderStatus.value = '已送达'
-      if (updateTimer) {
-        clearInterval(updateTimer)
-      }
+      // 订单完成后清理计时器
+      clearUpdateTimer()
     }
   }, 3000)
 })
 
-onUnmounted(() => {
+// 清理计时器的辅助函数
+const clearUpdateTimer = () => {
   if (updateTimer) {
     clearInterval(updateTimer)
+    updateTimer = null
   }
+}
+
+onUnmounted(() => {
+  // 确保组件卸载时清理计时器
+  clearUpdateTimer()
 })
 
+// 模拟跑腿员和商家信息
+const runnerPhone = '13800138000'
+const merchantPhone = '13900139000'
+
 // 联系跑腿员
-const handleContact = () => {
-  uni.showModal({
-    title: '联系跑腿员',
-    content: '是否拨打跑腿员电话？',
+const handleContactRunner = () => {
+  uni.showActionSheet({
+    itemList: ['拨打电话', '发送短信'],
     success: (res) => {
-      if (res.confirm) {
+      if (res.tapIndex === 0) {
+        // 拨打电话
         uni.makePhoneCall({
-          phoneNumber: '13800138000'
+          phoneNumber: runnerPhone,
+          fail: () => {
+            uni.showToast({
+              title: '拨打电话失败',
+              icon: 'none'
+            })
+          }
+        })
+      } else if (res.tapIndex === 1) {
+        // 发送短信
+        uni.showToast({
+          title: '正在打开短信应用',
+          icon: 'none'
         })
       }
+    }
+  })
+}
+
+// 联系商家
+const handleContactMerchant = () => {
+  uni.makePhoneCall({
+    phoneNumber: merchantPhone,
+    fail: () => {
+      uni.showToast({
+        title: '拨打电话失败',
+        icon: 'none'
+      })
     }
   })
 }
@@ -64,13 +99,17 @@ const handleContact = () => {
 const handleCancel = () => {
   uni.showModal({
     title: '取消订单',
-    content: '确定要取消当前订单吗？',
+    content: '确定要取消当前订单吗？取消订单可能会影响您的信用分',
     success: (res) => {
       if (res.confirm) {
+        // 清理计时器
+        clearUpdateTimer()
+
         uni.showToast({
           title: '订单已取消',
           icon: 'success'
         })
+
         setTimeout(() => {
           uni.navigateBack()
         }, 1500)
@@ -173,7 +212,7 @@ const handleCancel = () => {
     </view>
 
     <view class="action-section">
-      <button class="btn btn-secondary" @click="handleContact">
+      <button class="btn btn-secondary" @click="handleContactRunner">
         联系跑腿员
       </button>
       <button class="btn btn-danger" @click="handleCancel">

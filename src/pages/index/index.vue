@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { showToast, navigateTo } from '@dcloudio/uni-app'
 
 // 搜索关键词
 const searchValue = ref('')
@@ -115,7 +114,7 @@ const stats = {
 // 搜索功能
 const handleSearch = () => {
   if (searchValue.value) {
-    showToast({
+    uni.showToast({
       title: `搜索: ${searchValue.value}`,
       icon: 'none'
     })
@@ -124,26 +123,85 @@ const handleSearch = () => {
 
 // 服务点击处理
 const handleServiceClick = (service: typeof services[0]) => {
-  console.log('点击了服务:', service.name)
+  // 先显示Toast确认点击事件被触发
+  uni.showToast({
+    title: `选择服务: ${service.name}`,
+    icon: 'none',
+    duration: 1500
+  })
+  
+  // 使用本地存储传递服务类型（因为publish是tabBar页面，switchTab不能传参）
+  uni.setStorageSync('selectedServiceType', service.name)
+  
+  // 使用switchTab跳转到发布页面（因为publish在tabBar中）
+  setTimeout(() => {
+    uni.switchTab({
+      url: '/pages/publish/index',
+      success: () => {
+        console.log('跳转成功')
+      },
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        uni.showToast({
+          title: `跳转失败: ${err.errMsg || '未知错误'}`,
+          icon: 'none',
+          duration: 2000
+        })
+      }
+    })
+  }, 800)
+}
+
+// 快捷操作点击处理
+const handleQuickAction = (action: typeof quickActions[0]) => {
+  const serviceMap: Record<string, string> = {
+    '紧急跑腿': '取外卖',
+    '预约服务': '送文件',
+    '多人拼单': '代购物',
+    '企业服务': '其他'
+  }
+  const serviceType = serviceMap[action.name] || '其他'
 
   try {
-    // 跳转到发布页面，并传递服务类型
-    navigateTo({
-      url: `/pages/publish/index?type=${encodeURIComponent(service.name)}`
+    uni.navigateTo({
+      url: `/pages/publish/index?type=${encodeURIComponent(serviceType)}`
     })
   } catch (error) {
-    console.error('导航失败:', error)
-    showToast({
-      title: '页面跳转失败',
+    uni.showToast({
+      title: '页面跳转失败，请重试',
       icon: 'none'
     })
   }
 }
 
-// 快捷操作点击处理
-const handleQuickAction = (action: typeof quickActions[0]) => {
-  showToast({
-    title: action.name,
+// 轮播图点击处理
+const handleBannerClick = (banner: typeof banners[0]) => {
+  uni.showToast({
+    title: banner.title,
+    icon: 'none'
+  })
+  if (banner.id === 1) {
+    uni.showToast({
+      title: '新人专享优惠正在准备中',
+      icon: 'none'
+    })
+  } else if (banner.id === 2) {
+    uni.showToast({
+      title: '限时优惠活动即将上线',
+      icon: 'none'
+    })
+  } else if (banner.id === 3) {
+    uni.showToast({
+      title: '查看信用权益',
+      icon: 'none'
+    })
+  }
+}
+
+// 查看全部服务
+const handleViewAllServices = () => {
+  uni.showToast({
+    title: '全部服务正在整理中',
     icon: 'none'
   })
 }
@@ -183,7 +241,7 @@ const handleQuickAction = (action: typeof quickActions[0]) => {
     <view class="service-grid">
       <view class="service-title">
         <text class="title-text">服务分类</text>
-        <text class="title-more">查看全部 →</text>
+        <text class="title-more" @click="handleViewAllServices">查看全部 →</text>
       </view>
 
       <view class="grid">
@@ -194,6 +252,7 @@ const handleQuickAction = (action: typeof quickActions[0]) => {
           :data-service="service.name"
           :data-id="service.id"
           @click="handleServiceClick(service)"
+          @tap="handleServiceClick(service)"
         >
           <view class="service-icon" :style="{ background: service.bgColor }">
             <text class="icon-text">{{ service.icon }}</text>
@@ -215,7 +274,7 @@ const handleQuickAction = (action: typeof quickActions[0]) => {
           v-for="banner in banners"
           :key="banner.id"
         >
-          <view class="banner-item" :style="{ background: banner.bgColor }">
+          <view class="banner-item" :style="{ background: banner.bgColor }" @click="handleBannerClick(banner)">
             <view class="banner-content">
               <text class="banner-title">{{ banner.title }}</text>
               <text class="banner-desc">{{ banner.desc }}</text>
@@ -276,7 +335,6 @@ const handleQuickAction = (action: typeof quickActions[0]) => {
       </view>
     </view>
 
-    <!-- 底部占位 -->
     <view class="footer-space" />
   </view>
 </template>
@@ -286,321 +344,321 @@ const handleQuickAction = (action: typeof quickActions[0]) => {
 
 .container {
   min-height: 100vh;
-  background-color: $bg-color;
-  padding-bottom: 100px;
+  background: $bg-color;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 100rpx);
 }
 
 .header {
-  padding: $spacing-md;
-  background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
-  border-radius: 0 0 $border-radius-xl $border-radius-xl;
-  box-shadow: $shadow-md;
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  padding: 60rpx 32rpx 40rpx;
+  border-radius: 0 0 48rpx 48rpx;
 }
 
 .logo-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: $spacing-lg;
+  margin-bottom: 32rpx;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  margin-bottom: $spacing-xs;
+  gap: 16rpx;
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  background-color: $bg-white;
-  border-radius: 50%;
+  width: 80rpx;
+  height: 80rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.logo-text {
+  font-size: 40rpx;
   font-weight: bold;
-  font-size: $font-size-lg;
-  color: $primary-color;
+  color: #fff;
 }
 
 .logo-title {
-  font-size: $font-size-xl;
+  font-size: 40rpx;
   font-weight: bold;
-  color: $bg-white;
+  color: #fff;
 }
 
 .logo-subtitle {
-  font-size: $font-size-sm;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 8rpx;
+  display: block;
 }
 
 .search-bar {
   display: flex;
-  gap: $spacing-sm;
+  gap: 16rpx;
+  align-items: center;
 }
 
 .search-input-wrap {
   flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 40rpx;
+  padding: 20rpx 24rpx;
   display: flex;
   align-items: center;
-  background-color: $bg-white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-sm $spacing-md;
-  gap: $spacing-sm;
+  gap: 12rpx;
 }
 
 .search-icon {
-  font-size: $font-size-md;
+  font-size: 32rpx;
 }
 
 .search-input {
   flex: 1;
-  border: none;
-  outline: none;
-  font-size: $font-size-sm;
+  font-size: 28rpx;
+  color: #333;
 }
 
 .search-btn {
-  background-color: $bg-white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-sm $spacing-lg;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20rpx 32rpx;
+  border-radius: 40rpx;
 }
 
 .search-btn-text {
-  color: $primary-color;
+  font-size: 28rpx;
   font-weight: 500;
+  color: $primary-color;
 }
 
 .service-grid {
-  padding: $spacing-md;
+  padding: 32rpx;
 }
 
 .service-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: $spacing-md;
+  margin-bottom: 24rpx;
 }
 
 .title-text {
-  font-size: $font-size-lg;
-  font-weight: bold;
-  color: $text-primary;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
 }
 
 .title-more {
-  font-size: $font-size-sm;
+  font-size: 26rpx;
   color: $primary-color;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-md;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24rpx;
 }
 
 .grid-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 12rpx;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: transform 0.2s ease;
+}
 
-  &:active {
-    transform: scale(0.95);
-  }
+.grid-item:active {
+  transform: scale(0.95);
+  background: rgba(30, 136, 229, 0.1);
 }
 
 .service-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: $border-radius-lg;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: $shadow-sm;
 }
 
 .icon-text {
-  font-size: $font-size-xl;
+  font-size: 40rpx;
 }
 
 .service-name {
-  font-size: $font-size-sm;
-  color: $text-secondary;
+  font-size: 24rpx;
+  color: #333;
 }
 
 .banner-section {
-  padding: $spacing-md;
+  padding: 0 32rpx;
+  margin-bottom: 32rpx;
 }
 
 .banner-swiper {
-  height: 160px;
-  border-radius: $border-radius-lg;
+  height: 200rpx;
+  border-radius: 24rpx;
   overflow: hidden;
 }
 
 .banner-item {
   height: 100%;
+  padding: 24rpx;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: $spacing-lg;
-  color: $bg-white;
+  align-items: center;
 }
 
 .banner-content {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
+  flex: 1;
 }
 
 .banner-title {
-  font-size: $font-size-lg;
+  font-size: 32rpx;
   font-weight: bold;
+  color: #fff;
+  display: block;
+  margin-bottom: 8rpx;
 }
 
 .banner-desc {
-  font-size: $font-size-sm;
-  opacity: 0.9;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  display: block;
+  margin-bottom: 16rpx;
 }
 
 .banner-btn {
-  background-color: $bg-white;
-  border-radius: $border-radius-md;
-  padding: $spacing-xs $spacing-md;
-  margin-top: $spacing-xs;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 12rpx 24rpx;
+  border-radius: 24rpx;
   display: inline-block;
 }
 
 .banner-btn-text {
-  color: $primary-color;
-  font-size: $font-size-sm;
-  font-weight: 500;
+  font-size: 24rpx;
+  color: #fff;
 }
 
 .banner-image {
-  font-size: 48px;
+  width: 120rpx;
+  height: 120rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .banner-icon {
-  font-size: 48px;
+  font-size: 60rpx;
 }
 
 .quick-actions {
-  padding: $spacing-md;
+  padding: 0 32rpx 32rpx;
 }
 
 .action-title {
-  margin-bottom: $spacing-md;
+  margin-bottom: 24rpx;
 }
 
 .action-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-md;
+  display: flex;
+  gap: 16rpx;
 }
 
 .action-item {
-  background-color: $bg-white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-md;
+  flex: 1;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: $spacing-sm;
-  box-shadow: $shadow-sm;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-
-  &:active {
-    transform: scale(0.95);
-  }
+  gap: 8rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
 }
 
 .action-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: $border-radius-md;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .action-icon {
-  font-size: $font-size-lg;
+  font-size: 36rpx;
 }
 
 .action-name {
-  font-size: $font-size-md;
+  font-size: 26rpx;
   font-weight: 500;
-  color: $text-primary;
+  color: #333;
 }
 
 .action-desc {
-  font-size: $font-size-xs;
-  color: $text-tertiary;
+  font-size: 20rpx;
+  color: #999;
 }
 
 .stats-section {
-  padding: $spacing-md;
+  padding: 0 32rpx;
 }
 
 .stats-card {
-  background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
-  border-radius: $border-radius-lg;
-  padding: $spacing-lg;
+  background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+  border-radius: 24rpx;
+  padding: 32rpx;
   position: relative;
   overflow: hidden;
 }
 
 .stats-bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.1)"/></svg>');
-  background-size: 200px;
-  background-position: center;
+  top: -50%;
+  right: -20%;
+  width: 200rpx;
+  height: 200rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
 }
 
 .stats-content {
-  position: relative;
   display: flex;
-  align-items: center;
   justify-content: space-around;
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 8rpx;
 }
 
 .stat-value {
-  font-size: $font-size-xl;
+  font-size: 40rpx;
   font-weight: bold;
-  color: $bg-white;
+  color: #fff;
 }
 
 .stat-label {
-  font-size: $font-size-xs;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .stat-divider {
-  width: 1px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.3);
+  width: 2rpx;
+  height: 60rpx;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .footer-space {
-  height: 50px;
+  height: 100rpx;
 }
 </style>

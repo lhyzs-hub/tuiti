@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 
 // 服务类型
@@ -39,6 +39,24 @@ const price = computed(() => {
   return basePrice
 })
 
+// H5 环境下获取 URL 参数
+const getUrlParams = () => {
+  const params: Record<string, string> = {}
+  const url = window.location.href
+  const index = url.indexOf('?')
+  if (index !== -1) {
+    const query = url.substring(index + 1)
+    const pairs = query.split('&')
+    pairs.forEach(pair => {
+      const [key, value] = pair.split('=')
+      if (key && value) {
+        params[key] = decodeURIComponent(value)
+      }
+    })
+  }
+  return params
+}
+
 // 页面加载
 onLoad((options) => {
   if (options?.type) {
@@ -47,9 +65,32 @@ onLoad((options) => {
   }
 })
 
+// H5 环境下的页面加载
+onMounted(() => {
+  // 检查是否已通过 onLoad 设置了服务类型
+  if (!serviceType.value) {
+    const params = getUrlParams()
+    if (params.type) {
+      serviceType.value = params.type
+      formData.value.itemType = params.type
+    }
+  }
+  
+  // 检查本地存储中是否有服务类型（从首页点击跳转过来）
+  if (!serviceType.value) {
+    const storedType = uni.getStorageSync('selectedServiceType')
+    if (storedType) {
+      serviceType.value = storedType
+      formData.value.itemType = storedType
+      // 清除存储的服务类型，避免下次进入时自动填充
+      uni.removeStorageSync('selectedServiceType')
+    }
+  }
+})
+
 // 提交表单
 const handleSubmit = () => {
-  // 验证表单
+  // 验证物品描述
   if (!formData.value.itemDesc) {
     uni.showToast({
       title: '请填写物品描述',
@@ -58,6 +99,7 @@ const handleSubmit = () => {
     return
   }
 
+  // 验证取货地址
   if (!formData.value.pickupAddress) {
     uni.showToast({
       title: '请填写取货地址',
@@ -66,6 +108,7 @@ const handleSubmit = () => {
     return
   }
 
+  // 验证送达地址
   if (!formData.value.deliveryAddress) {
     uni.showToast({
       title: '请填写送达地址',
@@ -74,13 +117,51 @@ const handleSubmit = () => {
     return
   }
 
-  // 跳转到价格页面
-  uni.navigateTo({
-    url: `/pages/price/index?data=${encodeURIComponent(JSON.stringify({
-      ...formData.value,
-      price: price.value
-    }))}`
+  // 验证联系人姓名
+  if (!formData.value.contactName) {
+    uni.showToast({
+      title: '请填写联系人姓名',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 验证联系电话格式
+  const phoneRegex = /^1[3-9]\d{9}$/
+  if (!formData.value.contactPhone) {
+    uni.showToast({
+      title: '请填写联系电话',
+      icon: 'none'
+    })
+    return
+  }
+
+  if (!phoneRegex.test(formData.value.contactPhone)) {
+    uni.showToast({
+      title: '请填写正确的手机号码',
+      icon: 'none'
+    })
+    return
+  }
+
+  // 显示加载状态
+  uni.showLoading({
+    title: '正在提交...',
+    mask: true
   })
+
+  // 模拟提交延迟
+  setTimeout(() => {
+    uni.hideLoading()
+
+    // 跳转到价格页面
+    uni.navigateTo({
+      url: `/pages/price/index?data=${encodeURIComponent(JSON.stringify({
+        ...formData.value,
+        price: price.value
+      }))}`
+    })
+  }, 800)
 }
 
 // 重置表单

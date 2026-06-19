@@ -66,34 +66,43 @@ const creditBenefits = ref([
     title: '免单券',
     desc: '信用分80+可领取',
     icon: '🎁',
-    required: 80,
-    unlocked: true
+    required: 80
   },
   {
     id: 2,
     title: '优先派单',
     desc: '信用分90+可享受',
     icon: '⚡',
-    required: 90,
-    unlocked: false
+    required: 90
   },
   {
     id: 3,
     title: '专属客服',
     desc: '信用分95+可享受',
     icon: '👑',
-    required: 95,
-    unlocked: false
+    required: 95
   },
   {
     id: 4,
     title: '生日特权',
     desc: '信用分70+可享受',
     icon: '🎂',
-    required: 70,
-    unlocked: true
+    required: 70
   }
 ])
+
+// 计算权益是否解锁（基于实际信用分）
+const isBenefitUnlocked = (benefit: typeof creditBenefits.value[0]) => {
+  return creditData.value.score >= benefit.required
+}
+
+// 获取权益解锁状态文本
+const getBenefitStatus = (benefit: typeof creditBenefits.value[0]) => {
+  if (creditData.value.score >= benefit.required) {
+    return '已解锁'
+  }
+  return `${benefit.required}分解锁`
+}
 
 // 查看详情
 const handleViewDetail = (item: typeof creditHistory.value[0]) => {
@@ -106,7 +115,7 @@ const handleViewDetail = (item: typeof creditHistory.value[0]) => {
 
 // 领取权益
 const handleClaimBenefit = (benefit: typeof creditBenefits.value[0]) => {
-  if (benefit.unlocked) {
+  if (isBenefitUnlocked(benefit)) {
     uni.showToast({
       title: '领取成功',
       icon: 'success'
@@ -227,7 +236,7 @@ const handleClaimBenefit = (benefit: typeof creditBenefits.value[0]) => {
           v-for="benefit in creditBenefits"
           :key="benefit.id"
           class="benefit-item"
-          :class="{ unlocked: benefit.unlocked }"
+          :class="{ unlocked: isBenefitUnlocked(benefit) }"
           @click="handleClaimBenefit(benefit)"
         >
           <view class="benefit-icon">
@@ -238,7 +247,7 @@ const handleClaimBenefit = (benefit: typeof creditBenefits.value[0]) => {
             <text class="benefit-desc">{{ benefit.desc }}</text>
           </view>
           <view class="benefit-status">
-            <text class="status-text">{{ benefit.unlocked ? '已解锁' : `${benefit.required}分解锁` }}</text>
+            <text class="status-text">{{ getBenefitStatus(benefit) }}</text>
           </view>
         </view>
       </view>
