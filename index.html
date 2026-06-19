@@ -1,16 +1,686 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
-    <link rel="stylesheet" href="/tuiti/assets/uni.500a20de.css">
-
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#ffffff" />
-    <title>tuiti</title>
-    <script type="module" crossorigin src="/tuiti/assets/index-Ctax1ex-.js"></script>
-    <link rel="stylesheet" crossorigin href="/tuiti/assets/index-B0FJ9eeJ.css">
+    <title>腿替 - 专业跑腿服务平台</title>
+    <script type="text/javascript">
+      // 路由状态管理
+      var currentPage = 'home';
+      var selectedServiceType = '';
+      var orderData = null;
+
+      // 页面数据
+      var services = [
+        { id: 1, name: '打印材料', icon: '🖨️', bgColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+        { id: 2, name: '取外卖', icon: '🍔', bgColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+        { id: 3, name: '搬东西', icon: '📦', bgColor: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+        { id: 4, name: '代购物', icon: '🛒', bgColor: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
+        { id: 5, name: '送文件', icon: '📄', bgColor: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+        { id: 6, name: '其他', icon: '✨', bgColor: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)' }
+      ];
+
+      var banners = [
+        { id: 1, title: '新人专享', desc: '首单立减5元', btnText: '立即体验', icon: '🎁', bgColor: 'linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%)' },
+        { id: 2, title: '限时优惠', desc: '跑腿服务8折起', btnText: '查看详情', icon: '🔥', bgColor: 'linear-gradient(135deg, #FF9800 0%, #FFC107 100%)' },
+        { id: 3, title: '信用有礼', desc: '信用分兑换好礼', btnText: '去兑换', icon: '⭐', bgColor: 'linear-gradient(135deg, #4CAF50 0%, #81C784 100%)' }
+      ];
+
+      var quickActions = [
+        { id: 1, name: '紧急跑腿', desc: '30分钟送达', icon: '⚡', bgColor: 'linear-gradient(135deg, #F44336 0%, #FF5252 100%)' },
+        { id: 2, name: '预约服务', desc: '指定时间送达', icon: '📅', bgColor: 'linear-gradient(135deg, #2196F3 0%, #42A5F5 100%)' },
+        { id: 3, name: '多人拼单', desc: '更优惠的价格', icon: '👥', bgColor: 'linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%)' },
+        { id: 4, name: '企业服务', desc: '专属商务通道', icon: '💼', bgColor: 'linear-gradient(135deg, #00BCD4 0%, #26C6DA 100%)' }
+      ];
+
+      // 导航函数
+      function navigateTo(page) {
+        currentPage = page;
+        renderPage();
+        updateTabBar();
+      }
+
+      function selectService(serviceName) {
+        selectedServiceType = serviceName;
+        showToast('选择服务: ' + serviceName);
+        setTimeout(function() {
+          navigateTo('publish');
+        }, 800);
+      }
+
+      function showToast(msg) {
+        var toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(function() {
+          toast.remove();
+        }, 1500);
+      }
+
+      function submitOrder() {
+        var itemDesc = document.getElementById('itemDesc').value;
+        var pickupAddress = document.getElementById('pickupAddress').value;
+        var deliveryAddress = document.getElementById('deliveryAddress').value;
+        var contactName = document.getElementById('contactName').value;
+        var contactPhone = document.getElementById('contactPhone').value;
+
+        if (!itemDesc) { showToast('请填写物品描述'); return; }
+        if (!pickupAddress) { showToast('请填写取货地址'); return; }
+        if (!deliveryAddress) { showToast('请填写送达地址'); return; }
+        if (!contactName) { showToast('请填写联系人姓名'); return; }
+        if (!contactPhone || !/^1[3-9]\d{9}$/.test(contactPhone)) { showToast('请填写正确的手机号码'); return; }
+
+        orderData = {
+          itemType: selectedServiceType || document.getElementById('itemType').value,
+          itemDesc: itemDesc,
+          pickupAddress: pickupAddress,
+          deliveryAddress: deliveryAddress,
+          pickupTime: document.getElementById('pickupTime').value,
+          deliveryTime: document.getElementById('deliveryTime').value,
+          specialRequirements: document.getElementById('specialRequirements').value,
+          contactPhone: contactPhone,
+          contactName: contactName,
+          price: calculatePrice(selectedServiceType || document.getElementById('itemType').value)
+        };
+
+        showToast('提交成功');
+        setTimeout(function() {
+          navigateTo('price');
+        }, 800);
+      }
+
+      function calculatePrice(serviceType) {
+        var basePrice = 10;
+        if (serviceType === '打印材料') basePrice = 8;
+        else if (serviceType === '取外卖') basePrice = 12;
+        else if (serviceType === '搬东西') basePrice = 20;
+        else if (serviceType === '代购物') basePrice = 15;
+        return basePrice;
+      }
+
+      function confirmOrder() {
+        showToast('下单成功');
+        setTimeout(function() {
+          navigateTo('tracking');
+        }, 1500);
+      }
+
+      function cancelOrder() {
+        if (confirm('确定要取消当前订单吗？取消订单可能会影响您的信用分')) {
+          showToast('订单已取消');
+          setTimeout(function() {
+            navigateTo('home');
+          }, 1500);
+        }
+      }
+
+      // 渲染页面
+      function renderPage() {
+        var content = document.getElementById('app');
+        content.innerHTML = '';
+
+        switch(currentPage) {
+          case 'home':
+            renderHome();
+            break;
+          case 'publish':
+            renderPublish();
+            break;
+          case 'price':
+            renderPrice();
+            break;
+          case 'tracking':
+            renderTracking();
+            break;
+          case 'credit':
+            renderCredit();
+            break;
+          case 'profile':
+            renderProfile();
+            break;
+        }
+      }
+
+      function renderHome() {
+        var html = `
+          <div class="header">
+            <div class="logo-section">
+              <div class="logo">
+                <div class="logo-icon">
+                  <span class="logo-text">腿</span>
+                </div>
+                <span class="logo-title">腿替</span>
+              </div>
+              <span class="logo-subtitle">您的专属跑腿服务</span>
+            </div>
+            <div class="search-bar">
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="输入您需要的服务" />
+              </div>
+              <div class="search-btn" onclick="showToast('搜索功能开发中')"><span class="search-btn-text">搜索</span></div>
+            </div>
+          </div>
+
+          <div class="service-grid">
+            <div class="service-title">
+              <span class="title-text">服务分类</span>
+              <span class="title-more" onclick="showToast('全部服务整理中')">查看全部 →</span>
+            </div>
+            <div class="grid">`;
+        
+        services.forEach(function(s) {
+          html += `<div class="grid-item" onclick="selectService('${s.name}')">
+            <div class="service-icon" style="background: ${s.bgColor}"><span class="icon-text">${s.icon}</span></div>
+            <span class="service-name">${s.name}</span>
+          </div>`;
+        });
+
+        html += `</div></div>
+
+          <div class="banner-section">
+            <div class="banner-swiper">`;
+        
+        banners.forEach(function(b) {
+          html += `<div class="banner-item" style="background: ${b.bgColor}" onclick="showToast('${b.title}')">
+            <div class="banner-content">
+              <span class="banner-title">${b.title}</span>
+              <span class="banner-desc">${b.desc}</span>
+              <div class="banner-btn"><span class="banner-btn-text">${b.btnText}</span></div>
+            </div>
+            <div class="banner-image"><span class="banner-icon">${b.icon}</span></div>
+          </div>`;
+        });
+
+        html += `</div></div>
+
+          <div class="quick-actions">
+            <div class="action-title"><span class="title-text">快捷发布</span></div>
+            <div class="action-list">`;
+        
+        quickActions.forEach(function(a) {
+          html += `<div class="action-item" onclick="selectService('${a.name === '紧急跑腿' ? '取外卖' : a.name === '预约服务' ? '送文件' : a.name === '多人拼单' ? '代购物' : '其他'}')">
+            <div class="action-icon-wrap" style="background: ${a.bgColor}"><span class="action-icon">${a.icon}</span></div>
+            <span class="action-name">${a.name}</span>
+            <span class="action-desc">${a.desc}</span>
+          </div>`;
+        });
+
+        html += `</div></div>
+
+          <div class="stats-section">
+            <div class="stats-card">
+              <div class="stats-bg"></div>
+              <div class="stats-content">
+                <div class="stat-item"><span class="stat-value">100万+</span><span class="stat-label">累计订单</span></div>
+                <div class="stat-divider"></div>
+                <div class="stat-item"><span class="stat-value">5000+</span><span class="stat-label">在线跑腿员</span></div>
+                <div class="stat-divider"></div>
+                <div class="stat-item"><span class="stat-value">98.5%</span><span class="stat-label">满意度</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-space"></div>`;
+
+        document.getElementById('app').innerHTML = html;
+      }
+
+      function renderPublish() {
+        var html = `
+          <div class="container">
+            <div class="form-section">
+              <div class="section-title"><span class="title-text">基本信息</span></div>
+              <div class="form-item">
+                <span class="form-label">服务类型</span>
+                <input id="itemType" type="text" class="form-input" placeholder="请选择服务类型" value="${selectedServiceType}" />
+              </div>
+              <div class="form-item">
+                <span class="form-label">物品描述</span>
+                <textarea id="itemDesc" class="form-textarea" placeholder="请详细描述需要跑腿的物品" maxlength="200"></textarea>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title"><span class="title-text">地址信息</span></div>
+              <div class="form-item">
+                <span class="form-label">取货地址</span>
+                <input id="pickupAddress" type="text" class="form-input" placeholder="请输入取货地址" />
+              </div>
+              <div class="form-item">
+                <span class="form-label">送达地址</span>
+                <input id="deliveryAddress" type="text" class="form-input" placeholder="请输入送达地址" />
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title"><span class="title-text">时间要求</span></div>
+              <div class="form-item">
+                <span class="form-label">取货时间</span>
+                <input id="pickupTime" type="time" class="form-input" />
+              </div>
+              <div class="form-item">
+                <span class="form-label">送达时间</span>
+                <input id="deliveryTime" type="time" class="form-input" />
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title"><span class="title-text">联系方式</span></div>
+              <div class="form-item">
+                <span class="form-label">联系人</span>
+                <input id="contactName" type="text" class="form-input" placeholder="请输入联系人姓名" />
+              </div>
+              <div class="form-item">
+                <span class="form-label">联系电话</span>
+                <input id="contactPhone" type="tel" class="form-input" placeholder="请输入联系电话" />
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="section-title"><span class="title-text">特殊要求</span></div>
+              <div class="form-item">
+                <textarea id="specialRequirements" class="form-textarea" placeholder="如有特殊要求请填写" maxlength="100"></textarea>
+              </div>
+            </div>
+
+            <div class="price-preview">
+              <span class="price-label">预估价格</span>
+              <span class="price-value">¥${calculatePrice(selectedServiceType)}</span>
+            </div>
+
+            <div class="button-group">
+              <button class="btn btn-secondary" onclick="navigateTo('home')">取消</button>
+              <button class="btn btn-primary" onclick="submitOrder()">下一步</button>
+            </div>
+          </div>`;
+
+        document.getElementById('app').innerHTML = html;
+      }
+
+      function renderPrice() {
+        if (!orderData) {
+          navigateTo('home');
+          return;
+        }
+
+        var basePrice = orderData.price;
+        var distance = 3.5;
+        var distanceFee = Math.ceil(distance) * 2;
+        var timeFee = orderData.pickupTime ? 3 : 0;
+        var total = basePrice + distanceFee + timeFee;
+
+        var html = `
+          <div class="container">
+            <div class="price-card">
+              <div class="card-header">
+                <span class="header-title">智能定价</span>
+                <span class="header-subtitle">基于距离和时间的动态定价</span>
+              </div>
+              <div class="price-display">
+                <span class="price-label">预估总价</span>
+                <span class="price-value">¥${total}</span>
+              </div>
+              <div class="price-details">
+                <div class="detail-item"><span class="detail-label">基础费用</span><span class="detail-value">¥${basePrice}</span></div>
+                <div class="detail-item"><span class="detail-label">距离费用 (${distance}km)</span><span class="detail-value">¥${distanceFee}</span></div>
+                <div class="detail-item"><span class="detail-label">时间加急费</span><span class="detail-value">¥${timeFee}</span></div>
+              </div>
+            </div>
+
+            <div class="order-summary">
+              <div class="section-title"><span class="title-text">订单摘要</span></div>
+              <div class="summary-item"><span class="summary-label">服务类型</span><span class="summary-value">${orderData.itemType}</span></div>
+              <div class="summary-item"><span class="summary-label">物品描述</span><span class="summary-value">${orderData.itemDesc}</span></div>
+              <div class="summary-item"><span class="summary-label">取货地址</span><span class="summary-value">${orderData.pickupAddress}</span></div>
+              <div class="summary-item"><span class="summary-label">送达地址</span><span class="summary-value">${orderData.deliveryAddress}</span></div>
+            </div>
+
+            <div class="button-group">
+              <button class="btn btn-secondary" onclick="navigateTo('publish')">返回修改</button>
+              <button class="btn btn-primary" onclick="confirmOrder()">确认下单</button>
+            </div>
+          </div>`;
+
+        document.getElementById('app').innerHTML = html;
+      }
+
+      function renderTracking() {
+        var html = `
+          <div class="container">
+            <div class="map-section">
+              <div class="map-placeholder">
+                <span class="map-icon">🗺️</span>
+                <span class="map-text">实时地图</span>
+              </div>
+              <div class="distance-display">
+                <div class="distance-item"><span class="distance-label">双方距离</span><span class="distance-value">1.2km</span></div>
+                <div class="distance-divider"></div>
+                <div class="distance-item"><span class="distance-label">预计到达</span><span class="distance-value">15分钟</span></div>
+              </div>
+            </div>
+
+            <div class="status-section">
+              <div class="status-card">
+                <div class="status-header">
+                  <span class="status-title">订单状态</span>
+                  <div class="status-badge"><span class="status-text">进行中</span></div>
+                </div>
+                <div class="timeline">
+                  <div class="timeline-item completed">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content"><span class="timeline-title">订单已接单</span><span class="timeline-time">10:30</span></div>
+                  </div>
+                  <div class="timeline-item completed">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content"><span class="timeline-title">跑腿员已出发</span><span class="timeline-time">10:32</span></div>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content"><span class="timeline-title">正在配送中</span><span class="timeline-time">进行中</span></div>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content"><span class="timeline-title">已送达</span><span class="timeline-time">待完成</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="runner-section">
+              <div class="runner-card">
+                <div class="runner-info">
+                  <div class="runner-avatar"><span class="avatar-text">跑</span></div>
+                  <div class="runner-details">
+                    <span class="runner-name">跑腿员001</span>
+                    <span class="runner-phone">138****8000</span>
+                  </div>
+                </div>
+                <div class="runner-stats">
+                  <div class="stat-item"><span class="stat-value">4.9</span><span class="stat-label">评分</span></div>
+                  <div class="stat-divider"></div>
+                  <div class="stat-item"><span class="stat-value">1000+</span><span class="stat-label">订单</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-section">
+              <button class="btn btn-secondary" onclick="showToast('联系功能开发中')">联系跑腿员</button>
+              <button class="btn btn-danger" onclick="cancelOrder()">取消订单</button>
+            </div>
+          </div>`;
+
+        document.getElementById('app').innerHTML = html;
+      }
+
+      function renderCredit() {
+        var html = `
+          <div class="container">
+            <div class="credit-card">
+              <div class="card-bg"></div>
+              <div class="credit-info">
+                <div class="credit-icon">⭐</div>
+                <div class="credit-value">1280</div>
+                <div class="credit-label">信用积分</div>
+                <div class="credit-level">信用等级: 金牌会员</div>
+              </div>
+            </div>
+
+            <div class="credit-section">
+              <div class="section-title"><span class="title-text">积分明细</span></div>
+              <div class="credit-list">
+                <div class="credit-item"><span class="credit-desc">完成订单奖励</span><span class="credit-amount">+50</span><span class="credit-date">2024-01-15</span></div>
+                <div class="credit-item"><span class="credit-desc">首次注册奖励</span><span class="credit-amount">+100</span><span class="credit-date">2024-01-10</span></div>
+                <div class="credit-item"><span class="credit-desc">邀请好友奖励</span><span class="credit-amount">+200</span><span class="credit-date">2024-01-08</span></div>
+              </div>
+            </div>
+
+            <div class="credit-section">
+              <div class="section-title"><span class="title-text">积分兑换</span></div>
+              <div class="exchange-list">
+                <div class="exchange-item"><span class="exchange-icon">🎁</span><span class="exchange-name">10元优惠券</span><span class="exchange-price">500积分</span></div>
+                <div class="exchange-item"><span class="exchange-icon">🚀</span><span class="exchange-name">优先派单权</span><span class="exchange-price">300积分</span></div>
+                <div class="exchange-item"><span class="exchange-icon">🌟</span><span class="exchange-name">专属客服</span><span class="exchange-price">800积分</span></div>
+              </div>
+            </div>
+          </div>`;
+
+        document.getElementById('app').innerHTML = html;
+      }
+
+      function renderProfile() {
+        var html = `
+          <div class="container">
+            <div class="profile-header">
+              <div class="user-avatar"><span class="avatar-text">用</span></div>
+              <div class="user-info">
+                <span class="user-name">用户昵称</span>
+                <span class="user-phone">138****8000</span>
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <div class="section-title"><span class="title-text">我的订单</span></div>
+              <div class="order-list">
+                <div class="order-item" onclick="showToast('待付款订单')"><span class="order-icon">💳</span><span class="order-name">待付款</span><span class="order-count">2</span></div>
+                <div class="order-item" onclick="showToast('进行中订单')"><span class="order-icon">🚀</span><span class="order-name">进行中</span><span class="order-count">1</span></div>
+                <div class="order-item" onclick="showToast('已完成订单')"><span class="order-icon">✅</span><span class="order-name">已完成</span><span class="order-count">15</span></div>
+                <div class="order-item" onclick="showToast('已取消订单')"><span class="order-icon">❌</span><span class="order-name">已取消</span><span class="order-count">3</span></div>
+              </div>
+            </div>
+
+            <div class="profile-section">
+              <div class="menu-list">
+                <div class="menu-item" onclick="showToast('地址管理')"><span class="menu-icon">📍</span><span class="menu-name">收货地址</span></div>
+                <div class="menu-item" onclick="showToast('优惠券')"><span class="menu-icon">🎫</span><span class="menu-name">优惠券</span></div>
+                <div class="menu-item" onclick="showToast('帮助中心')"><span class="menu-icon">❓</span><span class="menu-name">帮助中心</span></div>
+                <div class="menu-item" onclick="showToast('设置')"><span class="menu-icon">⚙️</span><span class="menu-name">设置</span></div>
+              </div>
+            </div>
+          </div>`;
+
+        document.getElementById('app').innerHTML = html;
+      }
+
+      function updateTabBar() {
+        var tabs = ['home', 'publish', 'tracking', 'credit', 'profile'];
+        tabs.forEach(function(tab) {
+          var el = document.getElementById('tab-' + tab);
+          if (el) {
+            el.className = 'tab-item' + (currentPage === tab ? ' active' : '');
+          }
+        });
+      }
+
+      // 初始化
+      document.addEventListener('DOMContentLoaded', function() {
+        renderPage();
+      });
+    </script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; background: #F5F7FA; min-height: 100vh; }
+      #app { min-height: 100vh; padding-bottom: 120px; }
+
+      .header { background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%); padding: 60px 32px 40px; border-radius: 0 0 48px 48px; }
+      .logo-section { margin-bottom: 32px; }
+      .logo { display: flex; align-items: center; gap: 16px; }
+      .logo-icon { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+      .logo-text { font-size: 40px; font-weight: bold; color: #fff; }
+      .logo-title { font-size: 40px; font-weight: bold; color: #fff; }
+      .logo-subtitle { font-size: 24px; color: rgba(255,255,255,0.8); margin-top: 8px; display: block; }
+      .search-bar { display: flex; gap: 16px; align-items: center; }
+      .search-input-wrap { flex: 1; background: rgba(255,255,255,0.95); border-radius: 40px; padding: 20px 24px; display: flex; align-items: center; gap: 12px; }
+      .search-icon { font-size: 32px; }
+      .search-input { flex: 1; font-size: 28px; border: none; background: transparent; }
+      .search-btn { background: rgba(255,255,255,0.95); padding: 20px 32px; border-radius: 40px; }
+      .search-btn-text { font-size: 28px; font-weight: 500; color: #1E88E5; }
+
+      .service-grid { padding: 32px; }
+      .service-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+      .title-text { font-size: 32px; font-weight: 600; color: #333; }
+      .title-more { font-size: 26px; color: #1E88E5; }
+      .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+      .grid-item { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; border-radius: 16px; cursor: pointer; transition: all 0.2s; }
+      .grid-item:active { transform: scale(0.95); background: rgba(30,136,229,0.1); }
+      .service-icon { width: 100px; height: 100px; border-radius: 24px; display: flex; align-items: center; justify-content: center; }
+      .icon-text { font-size: 40px; }
+      .service-name { font-size: 24px; color: #333; }
+
+      .banner-section { padding: 0 32px; margin-bottom: 32px; }
+      .banner-swiper { height: 200px; border-radius: 24px; overflow: hidden; }
+      .banner-item { height: 100%; padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+      .banner-content { flex: 1; }
+      .banner-title { font-size: 32px; font-weight: bold; color: #fff; display: block; margin-bottom: 8px; }
+      .banner-desc { font-size: 24px; color: rgba(255,255,255,0.9); display: block; margin-bottom: 16px; }
+      .banner-btn { background: rgba(255,255,255,0.2); padding: 12px 24px; border-radius: 24px; display: inline-block; }
+      .banner-btn-text { font-size: 24px; color: #fff; }
+      .banner-image { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+      .banner-icon { font-size: 60px; }
+
+      .quick-actions { padding: 0 32px 32px; }
+      .action-title { margin-bottom: 24px; }
+      .action-list { display: flex; gap: 16px; }
+      .action-item { flex: 1; background: #fff; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+      .action-icon-wrap { width: 72px; height: 72px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+      .action-icon { font-size: 36px; }
+      .action-name { font-size: 26px; font-weight: 500; color: #333; }
+      .action-desc { font-size: 20px; color: #999; }
+
+      .stats-section { padding: 0 32px; }
+      .stats-card { background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%); border-radius: 24px; padding: 32px; position: relative; overflow: hidden; }
+      .stats-bg { position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+      .stats-content { display: flex; justify-content: space-around; align-items: center; position: relative; z-index: 1; }
+      .stat-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      .stat-value { font-size: 40px; font-weight: bold; color: #fff; }
+      .stat-label { font-size: 24px; color: rgba(255,255,255,0.8); }
+      .stat-divider { width: 2px; height: 60px; background: rgba(255,255,255,0.3); }
+      .footer-space { height: 100px; }
+
+      .container { min-height: 100vh; background: #F5F7FA; padding: 32px; padding-bottom: 120px; }
+      .form-section { background: #fff; border-radius: 24px; padding: 32px; margin-bottom: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+      .section-title { margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+      .form-item { margin-bottom: 32px; }
+      .form-label { display: block; font-size: 28px; color: #666; margin-bottom: 8px; }
+      .form-input { width: 100%; padding: 20px 24px; border: 1px solid #ddd; border-radius: 16px; font-size: 28px; }
+      .form-textarea { width: 100%; padding: 20px 24px; border: 1px solid #ddd; border-radius: 16px; font-size: 28px; min-height: 120px; }
+      .price-preview { background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%); border-radius: 24px; padding: 32px; margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+      .price-label { font-size: 28px; }
+      .price-value { font-size: 48px; font-weight: bold; }
+      .button-group { display: flex; gap: 24px; }
+      .btn { flex: 1; padding: 24px; border: none; border-radius: 24px; font-size: 28px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+      .btn:active { transform: scale(0.95); }
+      .btn-primary { background: #1E88E5; color: #fff; }
+      .btn-secondary { background: #fff; color: #333; border: 1px solid #ddd; }
+      .btn-danger { background: #F44336; color: #fff; }
+
+      .price-card { background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%); border-radius: 24px; padding: 32px; margin-bottom: 32px; color: #fff; }
+      .card-header { margin-bottom: 32px; }
+      .header-title { font-size: 36px; font-weight: bold; display: block; margin-bottom: 8px; }
+      .header-subtitle { font-size: 24px; opacity: 0.9; }
+      .price-display { text-align: center; margin-bottom: 32px; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.2); border-bottom: 1px solid rgba(255,255,255,0.2); }
+      .price-details { display: flex; flex-direction: column; gap: 16px; }
+      .detail-item { display: flex; justify-content: space-between; align-items: center; }
+      .detail-label { font-size: 24px; opacity: 0.9; }
+      .detail-value { font-size: 28px; font-weight: 500; }
+      .order-summary { background: #fff; border-radius: 24px; padding: 32px; margin-bottom: 32px; }
+      .summary-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #F5F7FA; }
+      .summary-item:last-child { border-bottom: none; }
+      .summary-label { font-size: 24px; color: #666; }
+      .summary-value { font-size: 24px; color: #333; text-align: right; max-width: 60%; }
+
+      .map-section { background: #fff; border-radius: 24px; padding: 32px; margin-bottom: 32px; }
+      .map-placeholder { height: 200px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; margin-bottom: 32px; }
+      .map-icon { font-size: 48px; }
+      .map-text { font-size: 28px; color: #1E88E5; }
+      .distance-display { display: flex; justify-content: space-around; align-items: center; padding: 32px 0; border-top: 1px solid #F5F7FA; }
+      .distance-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      .distance-label { font-size: 24px; color: #666; }
+      .distance-value { font-size: 36px; font-weight: bold; color: #1E88E5; }
+      .distance-divider { width: 1px; height: 40px; background: #ddd; }
+      .status-section { margin-bottom: 32px; }
+      .status-card { background: #fff; border-radius: 24px; padding: 32px; }
+      .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+      .status-title { font-size: 32px; font-weight: bold; color: #333; }
+      .status-badge { background: #FF9800; padding: 8px 24px; border-radius: 16px; }
+      .status-text { font-size: 24px; color: #fff; }
+      .timeline { display: flex; flex-direction: column; gap: 32px; }
+      .timeline-item { display: flex; align-items: flex-start; gap: 24px; position: relative; }
+      .timeline-item:not(:last-child)::after { content: ''; position: absolute; left: 6px; top: 20px; bottom: -20px; width: 2px; background: #ddd; }
+      .timeline-item.completed .timeline-dot { background: #4CAF50; }
+      .timeline-item.completed .timeline-title { color: #333; }
+      .timeline-dot { width: 12px; height: 12px; border-radius: 50%; background: #ddd; flex-shrink: 0; }
+      .timeline-content { display: flex; flex-direction: column; gap: 8px; }
+      .timeline-title { font-size: 28px; color: #999; }
+      .timeline-time { font-size: 24px; color: #999; }
+      .runner-section { margin-bottom: 32px; }
+      .runner-card { background: #fff; border-radius: 24px; padding: 32px; }
+      .runner-info { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
+      .runner-avatar { width: 50px; height: 50px; background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+      .avatar-text { font-size: 28px; color: #fff; font-weight: bold; }
+      .runner-details { display: flex; flex-direction: column; gap: 8px; }
+      .runner-name { font-size: 28px; font-weight: 500; color: #333; }
+      .runner-phone { font-size: 24px; color: #666; }
+      .runner-stats { display: flex; justify-content: space-around; padding: 32px 0; border-top: 1px solid #F5F7FA; }
+      .action-section { display: flex; gap: 24px; }
+
+      .credit-card { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); border-radius: 24px; padding: 48px; margin-bottom: 32px; position: relative; overflow: hidden; }
+      .card-bg { position: absolute; top: -50%; right: -20%; width: 200px; height: 200px; background: rgba(255,255,255,0.2); border-radius: 50%; }
+      .credit-info { position: relative; z-index: 1; text-align: center; }
+      .credit-icon { font-size: 64px; display: block; margin-bottom: 16px; }
+      .credit-value { font-size: 56px; font-weight: bold; color: #fff; display: block; margin-bottom: 8px; }
+      .credit-label { font-size: 28px; color: rgba(255,255,255,0.9); display: block; margin-bottom: 8px; }
+      .credit-level { font-size: 24px; color: rgba(255,255,255,0.8); }
+      .credit-section { background: #fff; border-radius: 24px; padding: 32px; margin-bottom: 32px; }
+      .credit-list { display: flex; flex-direction: column; gap: 16px; }
+      .credit-item { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #F5F7FA; }
+      .credit-item:last-child { border-bottom: none; }
+      .credit-desc { font-size: 28px; color: #333; }
+      .credit-amount { font-size: 28px; font-weight: 500; color: #4CAF50; }
+      .credit-date { font-size: 24px; color: #999; }
+      .exchange-list { display: flex; flex-direction: column; gap: 16px; }
+      .exchange-item { display: flex; align-items: center; gap: 16px; padding: 20px; background: #F5F7FA; border-radius: 16px; }
+      .exchange-icon { font-size: 36px; }
+      .exchange-name { flex: 1; font-size: 28px; color: #333; }
+      .exchange-price { font-size: 26px; color: #1E88E5; font-weight: 500; }
+
+      .profile-header { background: linear-gradient(135deg, #1E88E5 0%, #42A5F5 100%); border-radius: 0 0 48px 48px; padding: 60px 32px 48px; display: flex; align-items: center; gap: 24px; }
+      .user-avatar { width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+      .user-info { display: flex; flex-direction: column; gap: 8px; }
+      .user-name { font-size: 36px; font-weight: bold; color: #fff; }
+      .user-phone { font-size: 24px; color: rgba(255,255,255,0.8); }
+      .profile-section { background: #fff; border-radius: 24px; padding: 32px; margin-bottom: 32px; }
+      .order-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+      .order-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px; cursor: pointer; }
+      .order-icon { font-size: 40px; }
+      .order-name { font-size: 24px; color: #333; }
+      .order-count { font-size: 22px; color: #1E88E5; font-weight: 500; }
+      .menu-list { display: flex; flex-direction: column; gap: 8px; }
+      .menu-item { display: flex; align-items: center; gap: 24px; padding: 24px 0; border-bottom: 1px solid #F5F7FA; cursor: pointer; }
+      .menu-item:last-child { border-bottom: none; }
+      .menu-icon { font-size: 32px; }
+      .menu-name { font-size: 28px; color: #333; }
+
+      .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; justify-content: space-around; padding: 16px 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 999; }
+      .tab-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 24px; cursor: pointer; opacity: 0.5; transition: opacity 0.3s; }
+      .tab-item.active { opacity: 1; }
+      .tab-icon { font-size: 36px; }
+      .tab-text { font-size: 22px; color: #1E88E5; }
+
+      .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: #fff; padding: 24px 48px; border-radius: 16px; font-size: 28px; z-index: 1000; animation: fadeIn 0.3s; }
+      @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+    </style>
   </head>
   <body>
-    <div id="app"><!--app-html--></div>
+    <div id="app"></div>
+    <div class="tab-bar">
+      <div id="tab-home" class="tab-item active" onclick="navigateTo('home')"><span class="tab-icon">🏠</span><span class="tab-text">首页</span></div>
+      <div id="tab-publish" class="tab-item" onclick="navigateTo('publish')"><span class="tab-icon">✏️</span><span class="tab-text">发布</span></div>
+      <div id="tab-tracking" class="tab-item" onclick="navigateTo('tracking')"><span class="tab-icon">📍</span><span class="tab-text">追踪</span></div>
+      <div id="tab-credit" class="tab-item" onclick="navigateTo('credit')"><span class="tab-icon">⭐</span><span class="tab-text">信用</span></div>
+      <div id="tab-profile" class="tab-item" onclick="navigateTo('profile')"><span class="tab-icon">👤</span><span class="tab-text">我的</span></div>
+    </div>
   </body>
 </html>
